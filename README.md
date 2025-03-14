@@ -2,9 +2,9 @@
 
 ## Implementation 
 ```
-Cluster: stg-frontend
+Cluster: myplayground-cluster
 
-Namespace: frontend-acceptance
+Namespace: apps
 ```
 
 ```
