@@ -1,0 +1,72 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: acceptance-cleanup
+  namespace: ${NAMESPACE}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: ${NAMESPACE}
+  name: acceptance-cleanup
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources:
+  - services
+  - secrets
+  - serviceaccounts
+  - configmaps
+  verbs: ["get", "list", "delete"]
+- apiGroups: ["apps"]
+  resources:
+  - deployments
+  - replicasets
+  verbs: ["get", "list", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources:
+  - ingresses
+  verbs: ["get", "list", "delete"]
+- apiGroups: ["extensions"]
+  resources:
+  - ingresses
+  verbs: ["get", "list", "delete"]
+- apiGroups: ["autoscaling"]
+  resources:
+  - horizontalpodautoscalers
+  verbs: ["get", "list", "delete"]
+- apiGroups: ["policy"]
+  resources:
+  - poddisruptionbudgets
+  verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: acceptance-cleanup
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: acceptance-cleanup
+subjects:
+- kind: ServiceAccount
+  name: acceptance-cleanup
+  namespace: ${NAMESPACE}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: acceptance-cleanup
+  namespace: ${NAMESPACE}
+  labels:
+    app: acceptance-cleanup-job
+    team: swat
+spec:
+  template:
+    spec:
+      serviceAccountName: acceptance-cleanup
+      restartPolicy: Never
+      containers:
+      - image: europe-docker.pkg.dev/travix-com/eu-docker-travix/acceptance-cleanup:stable
+        imagePullPolicy: Always
+        name: acceptance-cleanup
